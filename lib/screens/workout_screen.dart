@@ -5,9 +5,7 @@ import 'package:gym_app/widgets/exercise_title.dart';
 import 'package:gym_app/models/workout_log.dart';
 
 class WorkoutScreen extends StatefulWidget {
-  final void Function(String) onBack;
-
-  const WorkoutScreen({super.key, required this.onBack});
+  const WorkoutScreen({super.key});
 
   @override
   State<WorkoutScreen> createState() => _WorkoutScreenState();
@@ -73,15 +71,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Workout Logger',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => widget.onBack('home'),
-        ),
-        backgroundColor: Colors.deepPurple,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -90,22 +83,26 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(labelText: 'Exercise Name'),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
+
             TextField(
               controller: _setsController,
               decoration: const InputDecoration(labelText: 'Sets'),
               keyboardType: TextInputType.number,
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
             TextField(
               controller: _repsController,
               decoration: const InputDecoration(labelText: 'Reps'),
               keyboardType: TextInputType.number,
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _addWorkout,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurpleAccent,
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                 padding: const EdgeInsets.symmetric(
                   vertical: 16,
                   horizontal: 24,
@@ -120,15 +117,26 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Logged Workouts:',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
             const SizedBox(height: 10),
             Expanded(
               child:
                   _logs.isEmpty
-                      ? const Center(child: Text('No workouts logged yet.'))
+                      ? Center(
+                        child: Text(
+                          'No workouts logged yet!',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium!.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      )
                       : ListView.builder(
                         itemCount: _logs.length,
                         itemBuilder: (context, index) {

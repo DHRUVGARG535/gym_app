@@ -22,8 +22,7 @@ class ProgressEntry {
 }
 
 class ProgressScreen extends StatefulWidget {
-  final Function(String) onBack; // Add onBack parameter
-  const ProgressScreen({super.key, required this.onBack});
+  const ProgressScreen({super.key});
 
   @override
   State<ProgressScreen> createState() => _ProgressScreenState();
@@ -65,11 +64,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: const Text('Add Progress'),
+            title: Text(
+              'Add Progress',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
             content: TextField(
               controller: controller,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(labelText: 'Enter Weight (kg)'),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
             actions: [
               TextButton(
@@ -102,13 +105,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Progress Tracker"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => widget.onBack('home'),
-        ),
-      ),
+      appBar: AppBar(title: const Text("Progress Tracker")),
       body:
           _entries.isEmpty
               ? const Center(child: Text("No progress entries yet."))

@@ -1,43 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'screens/home_screen.dart';
-import 'screens/workout_screen.dart';
-import 'screens/progress_screen.dart';
+
+final theme = ThemeData(
+  useMaterial3: true,
+  colorScheme: ColorScheme.fromSeed(
+    brightness: Brightness.dark,
+    seedColor: Color.fromARGB(255, 198, 40, 40)
+  ),
+  textTheme: GoogleFonts.latoTextTheme(),
+);
 
 void main() {
   runApp(const GymApp());
 }
 
-class GymApp extends StatefulWidget {
+class GymApp extends StatelessWidget {
   const GymApp({super.key});
 
   @override
-  State<GymApp> createState() => _GymAppState();
-}
-
-class _GymAppState extends State<GymApp> {
-  String currentScreen = 'home';
-
-  void switchScreen(String screenName) {
-    setState(() {
-      currentScreen = screenName;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    Widget screenWidget = HomeScreen(onSelectScreen: switchScreen);
-
-    if (currentScreen == 'workout') {
-      screenWidget = WorkoutScreen(onBack: switchScreen);
-    } else if (currentScreen == 'progress') {
-      screenWidget = ProgressScreen(onBack: switchScreen);
-    }
-
     return MaterialApp(
+      theme: theme,
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: screenWidget,
-      ),
+      home: 
+      HomeScreen()
+    
     );
   }
 }
