@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:gym_app/screens/sign_up.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -10,10 +11,11 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
-
   bool _obscurePassword = true;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  bool _isLoading = false;
 
   void _togglePassword() {
     setState(() {
@@ -21,22 +23,41 @@ class _AuthScreenState extends State<AuthScreen> {
     });
   }
 
-  void _submit() {
-    if (_formKey.currentState!.validate()) {
-      // For now, just show a success message
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Logging in...')));
-      // In a real app, you’d authenticate the user here and navigate to TabsScreen
-      Navigator.of(context).pushReplacementNamed('/tabs');
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) {
+      print('Form validation failed');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    print('Attempting sign in...');
+
+    try {
+      final userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
+      print('Sign in successful: ${userCredential.user?.uid}');
+      // No manual navigation is necessary; StreamBuilder handles it.
+      FocusScope.of(context).unfocus();
+    } catch (e, stacktrace) {
+      print('Sign in error: $e');
+      print(stacktrace);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: ${e.toString()}')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+      print('Sign in attempt finished');
     }
   }
 
   @override
   void dispose() {
-    super.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -70,6 +91,8 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   SizedBox(height: 24),
                   TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Please enter your email';
@@ -81,8 +104,6 @@ class _AuthScreenState extends State<AuthScreen> {
                       }
                       return null;
                     },
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
@@ -92,10 +113,9 @@ class _AuthScreenState extends State<AuthScreen> {
                         style: TextStyle(
                           color: Theme.of(
                             context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.7),
+                          ).colorScheme.onSurface.withOpacity(0.7),
                         ),
                       ),
-
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(8)),
                         borderSide: BorderSide.none,
@@ -106,15 +126,15 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
                   SizedBox(height: 16),
                   TextFormField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    keyboardType: TextInputType.visiblePassword,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Please enter your password';
                       }
                       return null;
                     },
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    keyboardType: TextInputType.visiblePassword,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
@@ -132,10 +152,9 @@ class _AuthScreenState extends State<AuthScreen> {
                         style: TextStyle(
                           color: Theme.of(
                             context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.7),
+                          ).colorScheme.onSurface.withOpacity(0.7),
                         ),
                       ),
-
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(8)),
                         borderSide: BorderSide.none,
@@ -148,7 +167,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _submit,
+                      onPressed: _isLoading ? null : _submit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary,
                         foregroundColor:
@@ -158,16 +177,20 @@ class _AuthScreenState extends State<AuthScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: Text(
-                        'Log In',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      child:
+                          _isLoading
+                              ? CircularProgressIndicator(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              )
+                              : Text(
+                                'Log In',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
                     ),
                   ),
                   SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-
                     children: [
                       Text(
                         'Don\'t have an account?',
@@ -182,7 +205,6 @@ class _AuthScreenState extends State<AuthScreen> {
                             MaterialPageRoute(builder: (ctx) => SignUpScreen()),
                           );
                         },
-
                         child: Text(
                           'Sign Up',
                           style: TextStyle(

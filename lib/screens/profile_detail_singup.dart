@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -13,21 +17,44 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   final _ageController = TextEditingController();
   final _weightController = TextEditingController();
   final _heightController = TextEditingController();
-
-  void _submitProfileDetails(Map<String, dynamic> initialData) {
+  Future<void> _submitProfileDetails(Map<String, dynamic> initialData) async {
     if (_formKey.currentState!.validate()) {
-      final userData = {
-        ...initialData,
-        'age': int.parse(_ageController.text),
-        'weight': double.parse(_weightController.text),
-        'height': double.parse(_heightController.text),
-      };
-      print('Final User Data: $userData'); // Debug log
+      try {
+        // Prepare user data
+        final userData = {
+          ...initialData,
+          'age': int.parse(_ageController.text),
+          'weight': double.parse(_weightController.text),
+          'height': double.parse(_heightController.text),
+          'profileImageUrl': null, // Placeholder for image URL
+        };
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Signing up...')),
-      );
-      Navigator.of(context).pushReplacementNamed('/tabs');
+        // Upload profile image to Firebase Storage if it exists
+        if (initialData['profileImage'] != null) {
+          final file = File(initialData['profileImage']);
+          final storageRef = FirebaseStorage.instance
+              .ref()
+              .child('user_profiles')
+              .child('${initialData['uid']}.jpg');
+          await storageRef.putFile(file);
+          final downloadUrl = await storageRef.getDownloadURL();
+          userData['profileImageUrl'] = downloadUrl; // Update with download URL
+        }
+
+        // Store user data in Firestore
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(initialData['uid'])
+            .set(userData);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile saved successfully!')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving profile: $e')));
+      }
     }
   }
 
@@ -41,7 +68,8 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final initialData = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final initialData =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
 
     return Scaffold(
       appBar: AppBar(
@@ -49,7 +77,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
         backgroundColor: const Color(0xFF263238),
       ),
       body: Container(
-        color: Theme.of(context).colorScheme.background,
+        color: Theme.of(context).colorScheme.surface,
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Form(
@@ -57,20 +85,13 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  'Good Afternoon, Dhruv!',
-                  style: GoogleFonts.lato(
-                    fontSize: 20,
-                    color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
-                  ),
-                ),
                 const SizedBox(height: 8),
                 Text(
                   'Profile Details',
                   style: GoogleFonts.lato(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onBackground,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -78,17 +99,25 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                   'Tell us more about yourself',
                   style: GoogleFonts.lato(
                     fontSize: 16,
-                    color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
                 const SizedBox(height: 32),
                 TextFormField(
                   controller: _ageController,
                   keyboardType: TextInputType.number,
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Age',
-                    labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+                    labelStyle: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.7),
+                    ),
                     filled: true,
                     fillColor: const Color(0xFF263238),
                     border: OutlineInputBorder(
@@ -111,10 +140,16 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                 TextFormField(
                   controller: _weightController,
                   keyboardType: TextInputType.number,
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Weight (kg)',
-                    labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+                    labelStyle: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.7),
+                    ),
                     filled: true,
                     fillColor: const Color(0xFF263238),
                     border: OutlineInputBorder(
@@ -137,10 +172,16 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                 TextFormField(
                   controller: _heightController,
                   keyboardType: TextInputType.number,
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Height (cm)',
-                    labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+                    labelStyle: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.7),
+                    ),
                     filled: true,
                     fillColor: const Color(0xFF263238),
                     border: OutlineInputBorder(

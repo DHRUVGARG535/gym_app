@@ -4,6 +4,7 @@ import 'package:gym_app/provider/exercise_provider.dart';
 import 'package:gym_app/screens/workout_tracker_screen.dart';
 
 class WorkoutScreen extends ConsumerStatefulWidget {
+  const WorkoutScreen({super.key});
   @override
   ConsumerState<WorkoutScreen> createState() => _WorkoutScreenState();
 }

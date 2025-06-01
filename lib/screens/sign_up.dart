@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:gym_app/screens/auth.dart';
@@ -36,22 +37,49 @@ class _SignUpScreenState extends State<SignUpScreen> {
     });
   }
 
-  void _signUp() {
+  Future<void> _signUp() async {
     if (_formKey.currentState!.validate()) {
-      final userData = {
-        'username': _usernameController.text.trim(),
-        'email': _emailController.text.trim(),
-        'password': _passwordController.text,
-        'profileImagePath': _profileImage?.path,
-      };
-      print('SignUpScreen Data: $userData'); // Debug log
+      try {
+        // Create user with Firebase Authentication
+        UserCredential userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+              email: _emailController.text.trim(),
+              password: _passwordController.text.trim(),
+            );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Proceeding to profile details...')),
-      );
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (c) => ProfileDetailsScreen()));
+        // Create a map with the user input data
+        final userData = {
+          'uid': userCredential.user!.uid, // Store Firebase UID
+          'username': _usernameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'profileImage': _profileImage?.path, // Store file path temporarily
+        };
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Proceeding to profile details...')),
+        );
+
+        // Navigate to ProfileDetailsScreen with arguments
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (c) => ProfileDetailsScreen(),
+            settings: RouteSettings(arguments: userData),
+          ),
+        );
+      } on FirebaseAuthException catch (e) {
+        // Handle authentication errors
+        String message;
+        if (e.code == 'email-already-in-use') {
+          message = 'This email is already registered.';
+        } else if (e.code == 'weak-password') {
+          message = 'The password is too weak.';
+        } else {
+          message = 'An error occurred: ${e.message}';
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
+      }
     }
   }
 
@@ -71,7 +99,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         backgroundColor: const Color(0xFF263238),
       ),
       body: Container(
-        color: Theme.of(context).colorScheme.background,
+        color: Theme.of(context).colorScheme.surface,
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Form(
@@ -84,7 +112,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   style: GoogleFonts.lato(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onBackground,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -94,7 +122,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     fontSize: 16,
                     color: Theme.of(
                       context,
-                    ).colorScheme.onBackground.withOpacity(0.7),
+                    ).colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -249,12 +277,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       style: TextStyle(
                         color: Theme.of(
                           context,
-                        ).colorScheme.onBackground.withOpacity(0.7),
+                        ).colorScheme.onSurface.withOpacity(0.7),
                       ),
                     ),
                     GestureDetector(
                       onTap: () {
-                        Navigator.of(context).push(
+                        Navigator.of(context).pushReplacement(
                           MaterialPageRoute(builder: (ctx) => AuthScreen()),
                         );
                       },
