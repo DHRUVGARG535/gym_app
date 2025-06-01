@@ -31,6 +31,13 @@ class ProgressScreen extends StatefulWidget {
 class _ProgressScreenState extends State<ProgressScreen> {
   List<ProgressEntry> _entries = [];
 
+  void _removeEntry(ProgressEntry entry) {
+    setState(() {
+      _entries.remove(entry);
+    });
+    _saveEntries();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -105,15 +112,25 @@ class _ProgressScreenState extends State<ProgressScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Progress Tracker")),
       body:
           _entries.isEmpty
-              ? const Center(child: Text("No progress entries yet."))
+              ? const Center(
+                child: Text(
+                  "No progress entries yet.",
+                  style: TextStyle(color: Colors.white),
+                ),
+              )
               : ListView.builder(
                 itemCount: _entries.length,
                 itemBuilder: (ctx, index) {
                   final entry = _entries[index];
                   return ListTile(
+                    trailing: IconButton(
+                      onPressed: () {
+                        _removeEntry(entry);
+                      },
+                      icon: Icon(Icons.delete),
+                    ),
                     leading: const Icon(Icons.fitness_center),
                     title: Text("${entry.weight} kg"),
                     subtitle: Text(_formatDate(entry.date)),

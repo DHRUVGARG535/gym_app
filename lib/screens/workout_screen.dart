@@ -1,148 +1,121 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:gym_app/widgets/exercise_title.dart';
-import 'package:gym_app/models/workout_log.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gym_app/provider/exercise_provider.dart';
+import 'package:gym_app/screens/workout_tracker_screen.dart';
 
-class WorkoutScreen extends StatefulWidget {
-  const WorkoutScreen({super.key});
-
+class WorkoutScreen extends ConsumerStatefulWidget {
   @override
-  State<WorkoutScreen> createState() => _WorkoutScreenState();
+  ConsumerState<WorkoutScreen> createState() => _WorkoutScreenState();
 }
 
-class _WorkoutScreenState extends State<WorkoutScreen> {
-  final _nameController = TextEditingController();
-  final _setsController = TextEditingController();
-  final _repsController = TextEditingController();
-  List<WorkoutLog> _logs = [];
+class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
+  String getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) {
+      return 'Good Morning, Dhruv!';
+    } else if (hour >= 12 && hour < 17) {
+      return 'Good Afternoon, Dhruv!';
+    } else {
+      return 'Good Evening, Dhruv!';
+    }
+  }
+
+  bool isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
 
   @override
   void initState() {
     super.initState();
-    _loadLogs();
-  }
-
-  Future<void> _loadLogs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String>? savedData = prefs.getStringList('workout_logs');
-
-    if (savedData != null) {
-      setState(() {
-        _logs =
-            savedData.map((e) => WorkoutLog.fromJson(jsonDecode(e))).toList();
-      });
-    }
-  }
-
-  Future<void> _saveLogs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final encodedList = _logs.map((e) => jsonEncode(e.toJson())).toList();
-    await prefs.setStringList('workout_logs', encodedList);
-  }
-
-  void _addWorkout() {
-    final name = _nameController.text;
-    final sets = int.tryParse(_setsController.text);
-    final reps = int.tryParse(_repsController.text);
-
-    if (name.isEmpty || sets == null || reps == null) return;
-
-    setState(() {
-      _logs.add(
-        WorkoutLog(name: name, sets: sets, reps: reps, date: DateTime.now()),
-      );
-      _nameController.clear();
-      _setsController.clear();
-      _repsController.clear();
-    });
-    _saveLogs();
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _setsController.dispose();
-    _repsController.dispose();
-    super.dispose();
+    Future.microtask(() => ref.read(exerciseProvider.notifier).loadExercises());
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Workout Logger',
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Exercise Name'),
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-            ),
+    final today =
+        [
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+          'Sunday',
+        ][DateTime.now().weekday - 1];
 
-            TextField(
-              controller: _setsController,
-              decoration: const InputDecoration(labelText: 'Sets'),
-              keyboardType: TextInputType.number,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-            ),
-            TextField(
-              controller: _repsController,
-              decoration: const InputDecoration(labelText: 'Reps'),
-              keyboardType: TextInputType.number,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _addWorkout,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 16,
-                  horizontal: 24,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                'Add Workout',
-                style: TextStyle(fontSize: 16, color: Colors.white),
+    final exercisesList =
+        ref.watch(exerciseProvider).where((e) => e.day == today).toList();
+
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              getGreeting(),
+              style: Theme.of(context).textTheme.headlineMedium!.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
               ),
             ),
             const SizedBox(height: 20),
             Text(
-              'Logged Workouts:',
-              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                color: Theme.of(context).colorScheme.onSurface,
+              'Today\'s Workout - Chest And Tricep',
+              style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Expanded(
+              child: ListView.builder(
+                itemCount: exercisesList.length,
+                itemBuilder: (context, index) {
+                  return Card(
+                    elevation: 3,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ListTile(
+                      leading: const Icon(Icons.fitness_center),
+                      title: Text(exercisesList[index].name),
+                      subtitle: Text(
+                        '${exercisesList[index].sets} sets • ${exercisesList[index].reps} reps',
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 10),
-            Expanded(
-              child:
-                  _logs.isEmpty
-                      ? Center(
-                        child: Text(
-                          'No workouts logged yet!',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium!.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                      )
-                      : ListView.builder(
-                        itemCount: _logs.length,
-                        itemBuilder: (context, index) {
-                          return ExerciseTitle(workoutLog: _logs[index]);
-                        },
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (ctx) =>
+                                WorkoutTrackerScreen(exercises: exercisesList),
                       ),
+                    );
+                  },
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text('Start Workout'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    textStyle: const TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
             ),
           ],
         ),

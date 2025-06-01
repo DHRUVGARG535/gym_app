@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/home_screen.dart';
+import 'package:gym_app/screens/auth.dart';
 
 final theme = ThemeData(
   useMaterial3: true,
   colorScheme: ColorScheme.fromSeed(
     brightness: Brightness.dark,
-    seedColor: Color.fromARGB(255, 198, 40, 40)
+    seedColor: Color.fromARGB(255, 28, 250, 239),
   ),
   textTheme: GoogleFonts.latoTextTheme(),
 );
@@ -20,12 +21,13 @@ class GymApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: theme,
-      debugShowCheckedModeBanner: false,
-      home: 
-      HomeScreen()
-    
+    return ProviderScope(
+      child: MaterialApp(
+        theme: theme,
+        debugShowCheckedModeBanner: false,
+
+        home: AuthScreen(),
+      ),
     );
   }
 }

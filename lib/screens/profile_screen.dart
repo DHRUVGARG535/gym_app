@@ -18,10 +18,13 @@ class ProfileScreen extends StatelessWidget {
               ), // Replace with actual image
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Dhruv Sharma', // Replace with dynamic name if needed
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            Text(
+              'Dhruv Garg', // Replace with dynamic name if needed
+              style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
+
             const Text(
               'dhruv@example.com',
               style: TextStyle(color: Colors.grey),
@@ -70,7 +73,9 @@ class _InfoCard extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
         ),
         Text(label, style: const TextStyle(color: Colors.grey)),
       ],
